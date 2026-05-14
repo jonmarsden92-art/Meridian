@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MeridianGlobal | International M&E Installation Services</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
   <style>
     :root {
@@ -21,6 +24,7 @@
       --paper:   #faf8f3;
       --cyan:    #00c8d4;
       --cyan2:   #7de8ee;
+      --cyan-glow: rgba(0,200,212,0.15);
       --alert:   #e8a020;
       --white:   #ffffff;
     }
@@ -46,18 +50,20 @@
       opacity: 0.5;
     }
 
-    /* ── CURSOR ── */
+    /* ── CUSTOM CURSOR ── */
     .cursor-cross {
       position: fixed; top: 0; left: 0;
       width: 20px; height: 20px;
       pointer-events: none;
       z-index: 99999;
-      transition: transform 0.08s linear;
+      transition: transform 0.08s linear, opacity 0.3s;
+      mix-blend-mode: difference;
     }
     .cursor-cross::before, .cursor-cross::after {
       content: '';
       position: absolute;
       background: var(--cyan);
+      transition: background 0.3s;
     }
     .cursor-cross::before { width: 1px; height: 20px; left: 50%; top: 0; }
     .cursor-cross::after  { width: 20px; height: 1px; top: 50%; left: 0; }
@@ -67,18 +73,40 @@
       border: 1px solid rgba(0,200,212,0.4);
       pointer-events: none;
       z-index: 99998;
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                  height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.3s,
+                  background 0.3s,
+                  opacity 0.3s;
     }
+    .cursor-ring.hovering {
+      width: 60px; height: 60px;
+      border-color: var(--cyan);
+      background: rgba(0,200,212,0.08);
+    }
+    .cursor-ring.clicking {
+      width: 30px; height: 30px;
+      border-color: var(--sand);
+      background: rgba(200,185,138,0.15);
+    }
+    .cursor-ring.hidden { opacity: 0; }
 
     /* ── NAV ── */
     header {
       position: fixed; top: 0; width: 100%; z-index: 1000;
+      transform: translateY(0);
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    header.scrolled-down { transform: translateY(-100%); }
+    header.scrolled-up { transform: translateY(0); }
+    
     .nav-top-bar {
       background: var(--cyan);
       padding: 0.35rem 3rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      overflow: hidden;
     }
     .nav-top-bar span {
       font-family: 'Barlow Condensed', sans-serif;
@@ -87,6 +115,8 @@
       text-transform: uppercase;
       color: var(--navy);
       font-weight: 600;
+      opacity: 0;
+      animation: slideInRight 0.8s 0.5s forwards;
     }
     nav {
       display: flex;
@@ -96,12 +126,20 @@
       background: rgba(11,18,32,0.96);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(0,200,212,0.15);
+      transition: padding 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                  background 0.4s;
     }
+    header.compact nav {
+      padding: 0.7rem 3rem;
+      background: rgba(11,18,32,0.98);
+    }
+    
     .logo-mark {
       display: flex;
       align-items: center;
       gap: 0.8rem;
       text-decoration: none;
+      position: relative;
     }
     .logo-icon {
       width: 36px; height: 36px;
@@ -111,6 +149,12 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.3s;
+    }
+    .logo-mark:hover .logo-icon {
+      transform: rotate(45deg);
+      border-color: var(--sand);
     }
     .logo-icon::before {
       content: '';
@@ -118,6 +162,7 @@
       width: 100%; height: 1px;
       background: var(--cyan);
       opacity: 0.3;
+      transition: background 0.3s;
     }
     .logo-icon::after {
       content: '';
@@ -125,6 +170,11 @@
       width: 1px; height: 100%;
       background: var(--cyan);
       opacity: 0.3;
+      transition: background 0.3s;
+    }
+    .logo-mark:hover .logo-icon::before,
+    .logo-mark:hover .logo-icon::after {
+      background: var(--sand);
     }
     .logo-icon-dot {
       width: 6px; height: 6px;
@@ -132,6 +182,11 @@
       border-radius: 50%;
       position: relative;
       z-index: 1;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .logo-mark:hover .logo-icon-dot {
+      background: var(--sand);
+      transform: scale(1.3);
     }
     .logo-text {
       display: flex;
@@ -145,8 +200,11 @@
       letter-spacing: 0.12em;
       color: var(--white);
       text-transform: uppercase;
+      transition: letter-spacing 0.4s;
     }
-    .logo-name span { color: var(--cyan); }
+    .logo-mark:hover .logo-name { letter-spacing: 0.15em; }
+    .logo-name span { color: var(--cyan); transition: color 0.3s; }
+    .logo-mark:hover .logo-name span { color: var(--sand); }
     .logo-sub {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 0.58rem;
@@ -162,6 +220,7 @@
       align-items: center;
       gap: 2.2rem;
     }
+    .nav-links li { position: relative; }
     .nav-links a {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 0.8rem;
@@ -171,16 +230,39 @@
       color: var(--mist);
       font-weight: 500;
       transition: color 0.25s;
+      position: relative;
+      display: inline-block;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 1px;
+      background: var(--cyan);
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .nav-links a:hover { color: var(--cyan); }
+    .nav-links a:hover::after { width: 100%; }
     .nav-cta-btn {
       background: transparent !important;
       border: 1px solid var(--cyan) !important;
       color: var(--cyan) !important;
       padding: 0.5rem 1.2rem;
-      transition: background 0.25s !important;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      position: relative;
+      overflow: hidden;
     }
-    .nav-cta-btn:hover { background: var(--cyan) !important; color: var(--navy) !important; }
+    .nav-cta-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--cyan);
+      transform: translateX(-100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: -1;
+    }
+    .nav-cta-btn:hover::after { transform: translateX(0); }
+    .nav-cta-btn:hover { color: var(--navy) !important; }
     .menu-toggle { display: none; color: var(--white); font-size: 1.5rem; cursor: pointer; background: none; border: none; }
 
     /* ── HERO ── */
@@ -193,7 +275,7 @@
       flex-direction: column;
     }
 
-    /* Topographic lines background */
+    /* Animated topographic lines */
     .topo-bg {
       position: absolute; inset: 0;
       opacity: 0.07;
@@ -213,7 +295,13 @@
           rgba(200,185,138,0.08) 60px,
           rgba(200,185,138,0.08) 61px
         );
+      animation: topoShift 20s linear infinite;
     }
+    @keyframes topoShift {
+      0% { background-position: 0 0, 0 0, 0 0; }
+      100% { background-position: 0 0, 100px 100px, -80px 80px; }
+    }
+    
     .hero-grid-overlay {
       position: absolute; inset: 0;
       background-image:
@@ -221,13 +309,20 @@
         linear-gradient(90deg, rgba(0,200,212,0.04) 1px, transparent 1px);
       background-size: 80px 80px;
       pointer-events: none;
+      animation: gridPulse 4s ease-in-out infinite;
     }
+    @keyframes gridPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    
     .hero-glow {
       position: absolute;
       top: -10%; right: -5%;
       width: 800px; height: 800px;
       background: radial-gradient(circle, rgba(0,200,212,0.08) 0%, transparent 65%);
       pointer-events: none;
+      animation: glowBreathe 6s ease-in-out infinite;
     }
     .hero-glow-2 {
       position: absolute;
@@ -235,6 +330,18 @@
       width: 600px; height: 600px;
       background: radial-gradient(circle, rgba(200,185,138,0.06) 0%, transparent 65%);
       pointer-events: none;
+      animation: glowBreathe 8s ease-in-out infinite reverse;
+    }
+    @keyframes glowBreathe {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+
+    /* Particle canvas */
+    #particleCanvas {
+      position: absolute; inset: 0;
+      pointer-events: none;
+      z-index: 2;
     }
 
     /* Coordinate overlay */
@@ -245,6 +352,7 @@
       letter-spacing: 0.15em;
       color: rgba(0,200,212,0.25);
       pointer-events: none;
+      opacity: 0;
     }
     .coord-tl { top: 120px; left: 3rem; }
     .coord-tr { top: 120px; right: 3rem; text-align: right; }
@@ -268,9 +376,14 @@
       gap: 1rem;
       margin-bottom: 2rem;
       opacity: 0;
-      animation: fadeUp 0.8s 0.2s forwards;
+      transform: translateY(20px);
     }
-    .eyebrow-line { width: 40px; height: 1px; background: var(--cyan); }
+    .eyebrow-line { 
+      width: 0; height: 1px; 
+      background: var(--cyan); 
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .eyebrow-line.active { width: 40px; }
     .eyebrow-text {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 0.72rem;
@@ -287,13 +400,32 @@
       color: var(--white);
       font-weight: 600;
       margin-bottom: 2rem;
-      opacity: 0;
-      animation: fadeUp 0.9s 0.35s forwards;
+      overflow: hidden;
     }
+    .hero h1 .line {
+      display: block;
+      overflow: hidden;
+    }
+    .hero h1 .line-inner {
+      display: block;
+      transform: translateY(110%);
+      transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .hero h1 .line-inner.visible { transform: translateY(0); }
     .hero h1 em {
       font-style: italic;
       color: var(--sand);
+      position: relative;
     }
+    .hero h1 em::after {
+      content: '';
+      position: absolute;
+      bottom: 0.1em; left: 0;
+      width: 0; height: 2px;
+      background: var(--sand);
+      transition: width 1s 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .hero h1 em.active::after { width: 100%; }
 
     .hero-desc {
       font-size: 1.05rem;
@@ -303,8 +435,11 @@
       font-weight: 300;
       margin-bottom: 3rem;
       opacity: 0;
-      animation: fadeUp 0.9s 0.55s forwards;
+      transform: translateY(30px);
+      filter: blur(4px);
+      transition: all 1s 0.6s;
     }
+    .hero-desc.visible { opacity: 1; transform: translateY(0); filter: blur(0); }
 
     .hero-actions {
       display: flex;
@@ -312,8 +447,10 @@
       align-items: center;
       flex-wrap: wrap;
       opacity: 0;
-      animation: fadeUp 0.9s 0.7s forwards;
+      transform: translateY(20px);
+      transition: all 0.8s 0.9s;
     }
+    .hero-actions.visible { opacity: 1; transform: translateY(0); }
 
     .btn-primary {
       display: inline-flex;
@@ -329,8 +466,8 @@
       text-transform: uppercase;
       text-decoration: none;
       border: none;
-      cursor: pointer;
-      transition: all 0.3s;
+      cursor: none;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       position: relative;
       overflow: hidden;
     }
@@ -339,11 +476,16 @@
       position: absolute; inset: 0;
       background: var(--cyan2);
       transform: translateX(-100%);
-      transition: transform 0.35s ease;
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .btn-primary:hover::before { transform: translateX(0); }
     .btn-primary > * { position: relative; z-index: 1; }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,200,212,0.3); }
+    .btn-primary:hover { 
+      transform: translateY(-3px); 
+      box-shadow: 0 15px 40px rgba(0,200,212,0.3);
+      letter-spacing: 0.22em;
+    }
+    .btn-primary:active { transform: translateY(-1px) scale(0.98); }
 
     .btn-outline {
       display: inline-flex;
@@ -358,21 +500,34 @@
       text-decoration: none;
       border-bottom: 1px solid rgba(200,185,138,0.4);
       padding-bottom: 2px;
-      transition: color 0.3s, border-color 0.3s;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
     }
-    .btn-outline:hover { color: var(--sand2); border-color: var(--sand2); }
+    .btn-outline::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 0; height: 1px;
+      background: var(--sand2);
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-outline:hover { 
+      color: var(--sand2); 
+      border-color: transparent;
+      letter-spacing: 0.18em;
+    }
+    .btn-outline:hover::after { width: 100%; }
 
     /* Credential badges */
     .hero-credentials {
       position: absolute;
       right: 5rem;
-      bottom: 100px;
+      bottom: 140px;
       display: flex;
       flex-direction: column;
       gap: 1rem;
       z-index: 5;
-      opacity: 0;
-      animation: fadeUp 1s 1.1s forwards;
     }
     .cred-badge {
       background: rgba(255,255,255,0.04);
@@ -382,8 +537,19 @@
       align-items: center;
       gap: 0.8rem;
       backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translateX(30px);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: none;
     }
-    .cred-icon { font-size: 1.2rem; }
+    .cred-badge.visible { opacity: 1; transform: translateX(0); }
+    .cred-badge:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(0,200,212,0.3);
+      transform: translateX(-5px);
+    }
+    .cred-icon { font-size: 1.2rem; transition: transform 0.3s; }
+    .cred-badge:hover .cred-icon { transform: scale(1.2); }
     .cred-text {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 0.7rem;
@@ -392,7 +558,8 @@
       color: var(--mist);
       line-height: 1.4;
     }
-    .cred-text strong { color: var(--cyan); display: block; font-size: 0.8rem; }
+    .cred-text strong { color: var(--cyan); display: block; font-size: 0.8rem; transition: color 0.3s; }
+    .cred-badge:hover .cred-text strong { color: var(--sand); }
 
     /* Stat bar */
     .hero-stat-bar {
@@ -402,8 +569,7 @@
       grid-template-columns: repeat(4, 1fr);
       position: relative;
       z-index: 5;
-      opacity: 0;
-      animation: fadeUp 0.9s 0.9s forwards;
+      overflow: hidden;
     }
     .h-stat {
       padding: 1.6rem 2.5rem;
@@ -411,7 +577,24 @@
       display: flex;
       align-items: center;
       gap: 1.2rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
     }
+    .h-stat.visible { opacity: 1; transform: translateY(0); }
+    .h-stat::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 2px;
+      background: var(--cyan);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .h-stat:hover::before { transform: scaleX(1); }
     .h-stat:last-child { border-right: none; }
     .h-stat-num {
       font-family: 'Cormorant Garamond', serif;
@@ -419,7 +602,9 @@
       font-weight: 700;
       color: var(--cyan);
       line-height: 1;
+      transition: transform 0.3s;
     }
+    .h-stat:hover .h-stat-num { transform: scale(1.1); }
     .h-stat-label {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 0.68rem;
@@ -437,6 +622,24 @@
       padding: 0.85rem 0;
       overflow: hidden;
       white-space: nowrap;
+      position: relative;
+    }
+    .marquee-strip::before,
+    .marquee-strip::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 150px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .marquee-strip::before {
+      left: 0;
+      background: linear-gradient(to right, var(--navy2), transparent);
+    }
+    .marquee-strip::after {
+      right: 0;
+      background: linear-gradient(to left, var(--navy2), transparent);
     }
     .marquee-inner {
       display: inline-flex;
@@ -449,7 +652,10 @@
       letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--slate);
+      transition: color 0.3s;
+      cursor: none;
     }
+    .marquee-inner span:hover { color: var(--cyan); }
     .marquee-inner .sep { color: var(--cyan); opacity: 0.5; }
 
     /* ── SECTIONS ── */
@@ -462,7 +668,12 @@
       gap: 0.8rem;
       margin-bottom: 1.2rem;
     }
-    .sec-label-line { width: 32px; height: 1px; background: var(--cyan); }
+    .sec-label-line { 
+      width: 0; height: 1px; 
+      background: var(--cyan); 
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sec-label-line.active { width: 32px; }
     .sec-label-text {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 0.68rem;
@@ -503,6 +714,7 @@
     }
     .intro-image-block {
       position: relative;
+      overflow: hidden;
     }
     .intro-img {
       width: 100%;
@@ -510,12 +722,22 @@
       object-fit: cover;
       filter: grayscale(20%);
       display: block;
+      transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s;
+    }
+    .intro-image-block:hover .intro-img {
+      transform: scale(1.05);
+      filter: grayscale(0%);
     }
     .intro-img-frame {
       position: absolute;
       top: 20px; left: 20px; right: -20px; bottom: -20px;
       border: 1px solid rgba(0,200,212,0.25);
       pointer-events: none;
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .intro-image-block:hover .intro-img-frame {
+      top: 10px; left: 10px; right: -10px; bottom: -10px;
+      border-color: rgba(0,200,212,0.5);
     }
     .intro-img-label {
       position: absolute;
@@ -528,6 +750,11 @@
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--cyan);
+      transition: all 0.4s;
+    }
+    .intro-image-block:hover .intro-img-label {
+      background: var(--cyan);
+      color: var(--navy);
     }
 
     .intro-pillars {
@@ -543,15 +770,26 @@
       padding: 1.4rem 0;
       border-bottom: 1px solid #dcdac8;
       align-items: start;
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: none;
     }
+    .intro-pillar.visible { opacity: 1; transform: translateX(0); }
     .intro-pillar:first-child { border-top: 1px solid #dcdac8; }
+    .intro-pillar:hover {
+      padding-left: 1rem;
+      background: rgba(0,200,212,0.02);
+    }
     .pillar-num {
       font-family: 'Cormorant Garamond', serif;
       font-size: 1.8rem;
       color: #dcdac8;
       line-height: 1;
       font-weight: 700;
+      transition: color 0.3s;
     }
+    .intro-pillar:hover .pillar-num { color: var(--cyan); }
     .pillar-title {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 0.85rem;
@@ -588,17 +826,25 @@
       padding: 2.8rem;
       position: relative;
       overflow: hidden;
-      transition: background 0.3s;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: none;
+      opacity: 0;
+      transform: translateY(40px);
     }
+    .cap-card.visible { opacity: 1; transform: translateY(0); }
     .cap-card::before {
       content: '';
       position: absolute;
       top: 0; left: 0;
       width: 3px; height: 0;
       background: var(--cyan);
-      transition: height 0.4s ease;
+      transition: height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .cap-card:hover { background: var(--navy3); }
+    .cap-card:hover { 
+      background: var(--navy3); 
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
     .cap-card:hover::before { height: 100%; }
 
     .cap-num {
@@ -608,11 +854,20 @@
       line-height: 1;
       font-weight: 700;
       margin-bottom: 1.5rem;
-      transition: color 0.3s;
+      transition: all 0.4s;
     }
-    .cap-card:hover .cap-num { color: rgba(0,200,212,0.2); }
+    .cap-card:hover .cap-num { 
+      color: rgba(0,200,212,0.2); 
+      transform: translateX(10px);
+    }
 
-    .cap-icon { font-size: 1.6rem; margin-bottom: 1.2rem; display: block; }
+    .cap-icon { 
+      font-size: 1.6rem; 
+      margin-bottom: 1.2rem; 
+      display: block;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .cap-card:hover .cap-icon { transform: scale(1.2) rotate(-5deg); }
 
     .cap-card h3 {
       font-family: 'Cormorant Garamond', serif;
@@ -621,7 +876,9 @@
       font-weight: 600;
       margin-bottom: 0.8rem;
       line-height: 1.2;
+      transition: color 0.3s;
     }
+    .cap-card:hover h3 { color: var(--cyan2); }
     .cap-card p {
       font-size: 0.88rem;
       color: var(--slate);
@@ -642,6 +899,13 @@
       color: var(--cyan);
       border: 1px solid rgba(0,200,212,0.25);
       padding: 0.25rem 0.6rem;
+      transition: all 0.3s;
+      cursor: none;
+    }
+    .tag:hover {
+      background: rgba(0,200,212,0.1);
+      border-color: var(--cyan);
+      transform: translateY(-2px);
     }
 
     /* ── PROCUREMENT BAND ── */
@@ -667,9 +931,18 @@
       gap: 1.2rem;
       padding: 1.4rem 0;
       border-bottom: 1px solid rgba(255,255,255,0.05);
+      opacity: 0;
+      transform: translateX(30px);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: none;
     }
+    .procure-feature.visible { opacity: 1; transform: translateX(0); }
     .procure-feature:first-child { padding-top: 0; }
     .procure-feature:last-child { border-bottom: none; }
+    .procure-feature:hover {
+      padding-left: 1rem;
+      background: rgba(255,255,255,0.02);
+    }
     .pf-icon {
       width: 42px; height: 42px;
       border: 1px solid rgba(200,185,138,0.25);
@@ -679,6 +952,12 @@
       font-size: 1.1rem;
       flex-shrink: 0;
       color: var(--sand);
+      transition: all 0.4s;
+    }
+    .procure-feature:hover .pf-icon {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      transform: rotate(360deg);
     }
     .pf-title {
       font-family: 'Barlow Condensed', sans-serif;
@@ -688,7 +967,9 @@
       color: var(--sand);
       font-weight: 600;
       margin-bottom: 0.35rem;
+      transition: color 0.3s;
     }
+    .procure-feature:hover .pf-title { color: var(--cyan2); }
     .pf-text {
       font-size: 0.88rem;
       color: var(--slate);
@@ -705,24 +986,28 @@
       align-items: center;
     }
 
-    /* Stylised world map using CSS + SVG inline */
+    /* Interactive map */
     .map-visual {
       position: relative;
       aspect-ratio: 16/9;
       background: var(--navy);
       overflow: hidden;
+      border: 1px solid rgba(0,200,212,0.1);
     }
     .map-visual svg {
       width: 100%;
       height: 100%;
       opacity: 0.6;
+      transition: opacity 0.6s;
     }
+    .map-visual:hover svg { opacity: 0.8; }
     .map-overlay-grid {
       position: absolute; inset: 0;
       background-image:
         linear-gradient(rgba(0,200,212,0.06) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0,200,212,0.06) 1px, transparent 1px);
       background-size: 40px 40px;
+      pointer-events: none;
     }
     .map-label {
       position: absolute;
@@ -733,6 +1018,32 @@
       text-transform: uppercase;
       color: rgba(0,200,212,0.5);
     }
+    
+    /* Interactive continent paths */
+    .continent-path {
+      transition: all 0.4s;
+      cursor: none;
+    }
+    .continent-path:hover {
+      fill: rgba(0,200,212,0.12) !important;
+      stroke: var(--cyan) !important;
+      stroke-width: 1.5 !important;
+      filter: drop-shadow(0 0 8px rgba(0,200,212,0.3));
+    }
+    
+    /* Flight path animation */
+    .flight-path {
+      fill: none;
+      stroke: var(--cyan);
+      stroke-width: 1;
+      stroke-dasharray: 5, 10;
+      opacity: 0.4;
+      animation: flightDash 3s linear infinite;
+    }
+    @keyframes flightDash {
+      to { stroke-dashoffset: -30; }
+    }
+    
     /* Ping dots */
     .ping {
       position: absolute;
@@ -743,6 +1054,7 @@
       position: absolute; inset: 0;
       background: var(--cyan);
       border-radius: 50%;
+      animation: pingPulse 2s ease-out infinite;
     }
     .ping::after {
       content: '';
@@ -752,11 +1064,50 @@
       border: 1px solid var(--cyan);
       border-radius: 50%;
       opacity: 0.4;
-      animation: ping 2s ease-out infinite;
+      animation: pingRing 2s ease-out infinite;
     }
-    .ping.sand::before { background: var(--sand); }
-    .ping.sand::after { border-color: var(--sand); }
-    @keyframes ping { 0% { transform: scale(0.8); opacity: 0.6; } 100% { transform: scale(2.5); opacity: 0; } }
+    .ping.sand::before { background: var(--sand); animation-name: pingPulseSand; }
+    .ping.sand::after { border-color: var(--sand); animation-name: pingRingSand; }
+    
+    @keyframes pingPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+    }
+    @keyframes pingRing {
+      0% { transform: scale(0.8); opacity: 0.6; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    @keyframes pingPulseSand {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+    }
+    @keyframes pingRingSand {
+      0% { transform: scale(0.8); opacity: 0.6; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    
+    /* Map tooltip */
+    .map-tooltip {
+      position: absolute;
+      background: var(--navy2);
+      border: 1px solid rgba(0,200,212,0.3);
+      padding: 0.6rem 1rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(5px);
+      transition: all 0.3s;
+      z-index: 10;
+      white-space: nowrap;
+    }
+    .map-tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
 
     .sector-list {
       display: flex;
@@ -771,10 +1122,15 @@
       border-bottom: 1px solid #dcdac8;
       opacity: 0;
       transform: translateX(30px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: none;
     }
     .sector-item:first-child { border-top: 1px solid #dcdac8; }
     .sector-item.visible { opacity: 1; transform: translateX(0); }
+    .sector-item:hover {
+      padding-left: 1rem;
+      background: rgba(0,200,212,0.02);
+    }
 
     .sector-icon {
       width: 44px; height: 44px;
@@ -784,6 +1140,11 @@
       justify-content: center;
       font-size: 1.2rem;
       flex-shrink: 0;
+      transition: all 0.4s;
+    }
+    .sector-item:hover .sector-icon {
+      background: var(--cyan);
+      transform: scale(1.1) rotate(-5deg);
     }
     .sector-name {
       font-family: 'Barlow Condensed', sans-serif;
@@ -793,7 +1154,9 @@
       text-transform: uppercase;
       color: var(--navy);
       margin-bottom: 0.15rem;
+      transition: color 0.3s;
     }
+    .sector-item:hover .sector-name { color: var(--cyan); }
     .sector-desc {
       font-size: 0.82rem;
       color: var(--slate);
@@ -804,9 +1167,10 @@
       color: var(--cyan);
       font-size: 0.9rem;
       opacity: 0;
-      transition: opacity 0.25s;
+      transform: translateX(-10px);
+      transition: all 0.3s;
     }
-    .sector-item:hover .sector-arrow { opacity: 1; }
+    .sector-item:hover .sector-arrow { opacity: 1; transform: translateX(0); }
 
     /* ── PROJECT TICKER / TRUST ── */
     .trust-section {
@@ -829,9 +1193,17 @@
     .trust-card {
       background: var(--navy2);
       padding: 2.2rem;
-      transition: background 0.3s;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: none;
+      opacity: 0;
+      transform: translateY(30px);
     }
-    .trust-card:hover { background: var(--navy3); }
+    .trust-card.visible { opacity: 1; transform: translateY(0); }
+    .trust-card:hover { 
+      background: var(--navy3); 
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
     .trust-card-org {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 0.65rem;
@@ -840,7 +1212,9 @@
       color: var(--cyan);
       font-weight: 600;
       margin-bottom: 0.6rem;
+      transition: color 0.3s;
     }
+    .trust-card:hover .trust-card-org { color: var(--sand); }
     .trust-card h4 {
       font-family: 'Cormorant Garamond', serif;
       font-size: 1.2rem;
@@ -848,7 +1222,9 @@
       font-weight: 600;
       margin-bottom: 0.6rem;
       line-height: 1.25;
+      transition: color 0.3s;
     }
+    .trust-card:hover h4 { color: var(--white); }
     .trust-card p {
       font-size: 0.84rem;
       color: var(--slate);
@@ -865,7 +1241,9 @@
       display: flex;
       align-items: center;
       gap: 0.4rem;
+      transition: color 0.3s;
     }
+    .trust-card:hover .trust-card-loc { color: var(--cyan); }
 
     /* ── QUOTE ── */
     .quote-section {
@@ -886,6 +1264,11 @@
       transform: translate(-50%, -48%);
       pointer-events: none;
       white-space: nowrap;
+      animation: quoteDrift 20s ease-in-out infinite;
+    }
+    @keyframes quoteDrift {
+      0%, 100% { transform: translate(-50%, -48%); }
+      50% { transform: translate(-48%, -52%); }
     }
     .quote-inner {
       max-width: 800px;
@@ -899,7 +1282,11 @@
       color: rgba(11,18,32,0.15);
       line-height: 1;
       margin-bottom: -1rem;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    .quote-mark.visible { opacity: 1; transform: scale(1); }
     .quote-text {
       font-family: 'Cormorant Garamond', serif;
       font-size: clamp(1.6rem, 3vw, 2.6rem);
@@ -907,14 +1294,21 @@
       color: var(--navy);
       line-height: 1.35;
       margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.8s 0.2s;
     }
+    .quote-text.visible { opacity: 1; transform: translateY(0); }
     .quote-attr {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 0.75rem;
       letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--steel);
+      opacity: 0;
+      transition: all 0.8s 0.4s;
     }
+    .quote-attr.visible { opacity: 1; }
 
     /* ── AFTERCARE ── */
     .aftercare-section { background: var(--paper); }
@@ -934,19 +1328,33 @@
       border: 1px solid #e4e2d8;
       padding: 1.8rem;
       position: relative;
-      transition: border-color 0.3s, transform 0.3s;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: none;
+      opacity: 0;
+      transform: translateY(30px);
     }
-    .af-card:hover { border-color: var(--cyan); transform: translateY(-3px); }
+    .af-card.visible { opacity: 1; transform: translateY(0); }
+    .af-card:hover { 
+      border-color: var(--cyan); 
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+    }
     .af-card::before {
       content: '';
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 2px;
       background: transparent;
-      transition: background 0.3s;
+      transition: background 0.4s;
     }
     .af-card:hover::before { background: var(--cyan); }
-    .af-icon { font-size: 1.6rem; margin-bottom: 1rem; display: block; }
+    .af-icon { 
+      font-size: 1.6rem; 
+      margin-bottom: 1rem; 
+      display: block;
+      transition: transform 0.4s;
+    }
+    .af-card:hover .af-icon { transform: scale(1.2); }
     .af-title {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 0.82rem;
@@ -979,12 +1387,27 @@
       gap: 1rem;
       padding: 1.4rem 0;
       border-bottom: 1px solid rgba(255,255,255,0.06);
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: none;
+    }
+    .cd-item.visible { opacity: 1; transform: translateX(0); }
+    .cd-item:hover {
+      padding-left: 0.5rem;
+      background: rgba(0,200,212,0.02);
     }
     .cd-icon {
       width: 38px; height: 38px;
       border: 1px solid rgba(0,200,212,0.2);
       display: flex; align-items: center; justify-content: center;
       font-size: 1rem; flex-shrink: 0; color: var(--cyan);
+      transition: all 0.4s;
+    }
+    .cd-item:hover .cd-icon {
+      background: var(--cyan);
+      color: var(--navy);
+      transform: rotate(360deg);
     }
     .cd-label {
       font-family: 'Barlow Condensed', sans-serif;
@@ -998,7 +1421,9 @@
       font-size: 0.92rem;
       color: var(--mist);
       font-weight: 300;
+      transition: color 0.3s;
     }
+    .cd-item:hover .cd-val { color: var(--white); }
 
     /* Form */
     .form-grid {
@@ -1006,7 +1431,7 @@
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
     }
-    .form-group { margin-bottom: 0; }
+    .form-group { margin-bottom: 0; position: relative; }
     .form-group.full { grid-column: 1 / -1; }
     .form-group label {
       display: block;
@@ -1017,7 +1442,9 @@
       color: var(--slate);
       font-weight: 600;
       margin-bottom: 0.5rem;
+      transition: color 0.3s;
     }
+    .form-group:focus-within label { color: var(--cyan); }
     .form-group input,
     .form-group textarea,
     .form-group select {
@@ -1029,9 +1456,10 @@
       font-size: 0.9rem;
       color: var(--offwhite);
       outline: none;
-      transition: border-color 0.25s, background 0.25s;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       appearance: none;
       border-radius: 0;
+      cursor: none;
     }
     .form-group input::placeholder,
     .form-group textarea::placeholder { color: var(--steel); }
@@ -1040,10 +1468,28 @@
     .form-group select:focus {
       border-color: var(--cyan);
       background: rgba(0,200,212,0.04);
+      box-shadow: 0 0 0 3px rgba(0,200,212,0.05);
+    }
+    .form-group input:valid:not(:placeholder-shown),
+    .form-group textarea:valid:not(:placeholder-shown) {
+      border-color: rgba(0,200,212,0.3);
     }
     .form-group select option { background: var(--navy2); color: var(--offwhite); }
     .form-group textarea { height: 130px; resize: vertical; font-weight: 300; }
     .form-submit-row { grid-column: 1 / -1; margin-top: 0.5rem; }
+    
+    /* Form validation indicators */
+    .form-group .valid-indicator {
+      position: absolute;
+      right: 1rem;
+      top: 2.3rem;
+      color: var(--cyan);
+      font-size: 0.8rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .form-group input:valid:not(:placeholder-shown) ~ .valid-indicator,
+    .form-group textarea:valid:not(:placeholder-shown) ~ .valid-indicator { opacity: 1; }
 
     /* ── FOOTER ── */
     footer {
@@ -1074,14 +1520,28 @@
       text-transform: uppercase;
       color: var(--slate);
       text-decoration: none;
-      transition: color 0.25s;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .footer-right a::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; left: 0;
+      width: 0; height: 1px;
+      background: var(--cyan);
+      transition: width 0.3s;
     }
     .footer-right a:hover { color: var(--cyan); }
+    .footer-right a:hover::after { width: 100%; }
 
     /* ── ANIMATIONS ── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(30px); }
       to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(-20px); }
+      to   { opacity: 1; transform: translateX(0); }
     }
     @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
@@ -1094,6 +1554,18 @@
     .reveal-delay-1 { transition-delay: 0.15s; }
     .reveal-delay-2 { transition-delay: 0.3s; }
     .reveal-delay-3 { transition-delay: 0.45s; }
+
+    /* ── SCROLL PROGRESS ── */
+    .scroll-progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: var(--cyan);
+      z-index: 10000;
+      width: 0%;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 10px rgba(0,200,212,0.5);
+    }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 1024px) {
@@ -1123,36 +1595,41 @@
       .footer-inner { flex-direction: column; gap: 1rem; text-align: center; }
       .cursor-cross, .cursor-ring { display: none; }
       body { cursor: auto; }
+      .btn-primary, .cap-card, .af-card, .trust-card, .sector-item, 
+      .intro-pillar, .procure-feature, .cd-item, .tag, .cred-badge { cursor: pointer; }
     }
   </style>
 </head>
 <body>
+
+<!-- SCROLL PROGRESS -->
+<div class="scroll-progress" id="scrollProgress"></div>
 
 <!-- CURSOR -->
 <div class="cursor-cross" id="cursorCross"></div>
 <div class="cursor-ring" id="cursorRing"></div>
 
 <!-- NAV -->
-<header>
+<header id="mainHeader">
   <div class="nav-top-bar">
     <span>UN · NGO · Government · International Aid · Humanitarian Infrastructure</span>
     <span>UK Registered · International Operations</span>
   </div>
   <nav>
-    <a href="#home" class="logo-mark">
+    <a href="#home" class="logo-mark" data-cursor="hover">
       <div class="logo-icon"><div class="logo-icon-dot"></div></div>
       <div class="logo-text">
         <span class="logo-name">Meridian<span>Global</span></span>
         <span class="logo-sub">International M&amp;E Installation Services</span>
       </div>
     </a>
-    <button class="menu-toggle" id="menuToggle">☰</button>
+    <button class="menu-toggle" id="menuToggle" data-cursor="hover">☰</button>
     <ul class="nav-links" id="navLinks">
-      <li><a href="#capabilities">Capabilities</a></li>
-      <li><a href="#sectors">Sectors</a></li>
-      <li><a href="#projects">Projects</a></li>
-      <li><a href="#aftercare">Aftercare</a></li>
-      <li><a href="#contact" class="nav-cta-btn">Enquire</a></li>
+      <li><a href="#capabilities" data-cursor="hover">Capabilities</a></li>
+      <li><a href="#sectors" data-cursor="hover">Sectors</a></li>
+      <li><a href="#projects" data-cursor="hover">Projects</a></li>
+      <li><a href="#aftercare" data-cursor="hover">Aftercare</a></li>
+      <li><a href="#contact" class="nav-cta-btn" data-cursor="hover">Enquire</a></li>
     </ul>
   </nav>
 </header>
@@ -1163,6 +1640,7 @@
   <div class="hero-grid-overlay"></div>
   <div class="hero-glow"></div>
   <div class="hero-glow-2"></div>
+  <canvas id="particleCanvas"></canvas>
 
   <!-- Coordinate labels -->
   <div class="coord-label coord-tl">51°32'N / 000°12'W · LONDON HQ</div>
@@ -1175,31 +1653,35 @@
       <div class="eyebrow-line"></div>
       <span class="eyebrow-text">Mechanical &amp; Electrical · Global Field Operations</span>
     </div>
-    <h1>Engineering<br>where it matters<br><em>most.</em></h1>
+    <h1>
+      <span class="line"><span class="line-inner">Engineering</span></span>
+      <span class="line"><span class="line-inner">where it matters</span></span>
+      <span class="line"><span class="line-inner"><em>most.</em></span></span>
+    </h1>
     <p class="hero-desc">
       Delivering critical mechanical and electrical infrastructure for the world's most demanding environments.
       UN agencies, governments, and international NGOs trust MeridianGlobal to install, commission, and sustain
       the systems that save and support lives.
     </p>
     <div class="hero-actions">
-      <a href="#contact" class="btn-primary">
+      <a href="#contact" class="btn-primary" data-cursor="hover">
         <span>Request Project Brief</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </a>
-      <a href="#capabilities" class="btn-outline">View Capabilities →</a>
+      <a href="#capabilities" class="btn-outline" data-cursor="hover">View Capabilities →</a>
     </div>
   </div>
 
   <div class="hero-credentials">
-    <div class="cred-badge">
+    <div class="cred-badge" data-cursor="hover">
       <span class="cred-icon">🌐</span>
       <div class="cred-text"><strong>60+ Countries</strong>Operational experience</div>
     </div>
-    <div class="cred-badge">
+    <div class="cred-badge" data-cursor="hover">
       <span class="cred-icon">🏛️</span>
       <div class="cred-text"><strong>UN · NGO · Government</strong>Sector experience</div>
     </div>
-    <div class="cred-badge">
+    <div class="cred-badge" data-cursor="hover">
       <span class="cred-icon">🇬🇧</span>
       <div class="cred-text"><strong>UK-Based Support</strong>24/7 aftercare desk</div>
     </div>
@@ -1207,15 +1689,15 @@
 
   <div class="hero-stat-bar">
     <div class="h-stat">
-      <div class="h-stat-num">60<span style="font-size:1.6rem">+</span></div>
+      <div class="h-stat-num">0</div>
       <div class="h-stat-label">Countries<br>Operational</div>
     </div>
     <div class="h-stat">
-      <div class="h-stat-num">200<span style="font-size:1.6rem">+</span></div>
+      <div class="h-stat-num">0</div>
       <div class="h-stat-label">Contracts<br>Delivered</div>
     </div>
     <div class="h-stat">
-      <div class="h-stat-num">15<span style="font-size:1.6rem">+</span></div>
+      <div class="h-stat-num">0</div>
       <div class="h-stat-label">Years Field<br>Experience</div>
     </div>
     <div class="h-stat">
@@ -1262,21 +1744,23 @@
           <p class="sec-sub">MeridianGlobal exists to deliver mechanical and electrical infrastructure where conventional contractors won't go — or can't perform. From active conflict recovery zones to remote humanitarian response sites, we install, commission, and sustain the critical systems that underpin human welfare.</p>
         </div>
         <div class="intro-pillars">
-          <div class="intro-pillar reveal reveal-delay-1">
-            <div class="pillar-num">01</div>
+          <div class="intro-pillar" data-cursor="hover">
+            <div class="pillar-num">01 I need to continue the code output from where it was cut off. Let me complete the rest of the HTML document. </think> I'll continue from where the output was cut off and complete the enhanced MeridianGlobal website:
+
+```html
             <div>
               <div class="pillar-title">Sector Experience, Global Networks</div>
               <p class="pillar-text">Meridian's team brings direct field experience supporting UN agencies, international NGOs, and national governments — developed through prior roles across Africa, the Middle East, Southeast Asia, and Eastern Europe.</p>
             </div>
           </div>
-          <div class="intro-pillar reveal reveal-delay-2">
+          <div class="intro-pillar" data-cursor="hover">
             <div class="pillar-num">02</div>
             <div>
               <div class="pillar-title">Procurement Coordination</div>
               <p class="pillar-text">We work alongside our clients' procurement teams and their approved partners to ensure a smooth, compliant procurement process — coordinating requirements, schedules, and technical standards without acting as a procuring agent.</p>
             </div>
           </div>
-          <div class="intro-pillar reveal reveal-delay-3">
+          <div class="intro-pillar" data-cursor="hover">
             <div class="pillar-num">03</div>
             <div>
               <div class="pillar-title">UK-Anchored Accountability</div>
@@ -1308,71 +1792,71 @@
         <p class="sec-sub light">End-to-end mechanical and electrical capability means no subcontracting risk, no coordination gaps — just a single accountable partner from procurement through to commissioning.</p>
       </div>
     </div>
-    <div class="cap-grid reveal">
-      <div class="cap-card">
+    <div class="cap-grid">
+      <div class="cap-card" data-cursor="hover">
         <div class="cap-num">01</div>
         <span class="cap-icon">🔥</span>
         <h3>Incinerator Installation</h3>
         <p>Specification, procurement, and installation of medical and industrial waste incinerators for hospitals, field camps, and waste management facilities. Full commissioning and operator training included.</p>
         <div class="cap-tags">
-          <span class="tag">Medical Waste</span>
-          <span class="tag">Industrial</span>
-          <span class="tag">WHO Compliant</span>
+          <span class="tag" data-cursor="hover">Medical Waste</span>
+          <span class="tag" data-cursor="hover">Industrial</span>
+          <span class="tag" data-cursor="hover">WHO Compliant</span>
         </div>
       </div>
-      <div class="cap-card">
+      <div class="cap-card" data-cursor="hover">
         <div class="cap-num">02</div>
         <span class="cap-icon">⚡</span>
         <h3>Electrical Installation</h3>
         <p>Full LV/MV electrical systems — from distribution boards and generator integration to solar hybrid systems and grid-tie solutions. Designed for environments with unreliable or no existing infrastructure.</p>
         <div class="cap-tags">
-          <span class="tag">LV / MV Systems</span>
-          <span class="tag">Solar Hybrid</span>
-          <span class="tag">Generator Integration</span>
+          <span class="tag" data-cursor="hover">LV / MV Systems</span>
+          <span class="tag" data-cursor="hover">Solar Hybrid</span>
+          <span class="tag" data-cursor="hover">Generator Integration</span>
         </div>
       </div>
-      <div class="cap-card">
+      <div class="cap-card" data-cursor="hover">
         <div class="cap-num">03</div>
         <span class="cap-icon">🏥</span>
         <h3>Medical Equipment</h3>
         <p>Installation and commissioning of medical equipment across field hospitals, permanent health facilities, and emergency response units. Works with UNICEF, WHO, and ICRC supply chains.</p>
         <div class="cap-tags">
-          <span class="tag">Field Hospitals</span>
-          <span class="tag">UNICEF Supply</span>
-          <span class="tag">Commissioning</span>
+          <span class="tag" data-cursor="hover">Field Hospitals</span>
+          <span class="tag" data-cursor="hover">UNICEF Supply</span>
+          <span class="tag" data-cursor="hover">Commissioning</span>
         </div>
       </div>
-      <div class="cap-card">
+      <div class="cap-card" data-cursor="hover">
         <div class="cap-num">04</div>
         <span class="cap-icon">🏗️</span>
         <h3>Emergency Shelter</h3>
         <p>Design and construction of semi-permanent and permanent shelter structures — from rapid-deployment modular units to engineered buildings with full M&amp;E services installed and commissioned.</p>
         <div class="cap-tags">
-          <span class="tag">Rapid Deploy</span>
-          <span class="tag">Modular Systems</span>
-          <span class="tag">Full M&amp;E Fit</span>
+          <span class="tag" data-cursor="hover">Rapid Deploy</span>
+          <span class="tag" data-cursor="hover">Modular Systems</span>
+          <span class="tag" data-cursor="hover">Full M&amp;E Fit</span>
         </div>
       </div>
-      <div class="cap-card">
+      <div class="cap-card" data-cursor="hover">
         <div class="cap-num">05</div>
         <span class="cap-icon">🔧</span>
         <h3>Mechanical Systems</h3>
         <p>HVAC, water supply, plumbing, and process pipework for field installations, transit hubs, medical facilities, and administrative buildings — engineered and installed to international standards.</p>
         <div class="cap-tags">
-          <span class="tag">HVAC</span>
-          <span class="tag">Water Systems</span>
-          <span class="tag">Process Pipework</span>
+          <span class="tag" data-cursor="hover">HVAC</span>
+          <span class="tag" data-cursor="hover">Water Systems</span>
+          <span class="tag" data-cursor="hover">Process Pipework</span>
         </div>
       </div>
-      <div class="cap-card">
+      <div class="cap-card" data-cursor="hover">
         <div class="cap-num">06</div>
         <span class="cap-icon">🤝</span>
         <h3>Procurement Coordination</h3>
         <p>We work closely with our clients' procurement teams and their approved partners to ensure compliant, efficient processes. We coordinate technical requirements, schedules, and logistics — without acting as a procuring agent or purchasing on behalf of clients.</p>
         <div class="cap-tags">
-          <span class="tag">Client-Led Process</span>
-          <span class="tag">Compliance Support</span>
-          <span class="tag">Technical Liaison</span>
+          <span class="tag" data-cursor="hover">Client-Led Process</span>
+          <span class="tag" data-cursor="hover">Compliance Support</span>
+          <span class="tag" data-cursor="hover">Technical Liaison</span>
         </div>
       </div>
     </div>
@@ -1389,35 +1873,35 @@
           <h2 class="sec-heading light sand">We work with<br>your procurement<br><em>partners.</em></h2>
           <p class="sec-sub light">Meridian does not act as a procuring agent or purchase goods on behalf of clients. Instead, we work directly alongside your procurement team and their approved partners — providing technical expertise, coordination, and compliance support to keep complex international contracts on track.</p>
           <br><br>
-          <a href="#contact" class="btn-primary">
+          <a href="#contact" class="btn-primary" data-cursor="hover">
             <span>Discuss Your Contract</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
         </div>
       </div>
       <div class="procure-right">
-        <div class="procure-feature reveal">
+        <div class="procure-feature" data-cursor="hover">
           <div class="pf-icon">🏛️</div>
           <div>
             <div class="pf-title">Framework Familiarity</div>
             <p class="pf-text">Our team has working knowledge of international procurement frameworks including UNDP, FCDO, World Bank, and EU processes — meaning we understand the compliance environment your procurement partners operate within.</p>
           </div>
         </div>
-        <div class="procure-feature reveal reveal-delay-1">
+        <div class="procure-feature" data-cursor="hover">
           <div class="pf-icon">📐</div>
           <div>
             <div class="pf-title">Technical Specification Support</div>
             <p class="pf-text">We help clients and their procurement teams define accurate technical specifications for M&amp;E equipment and systems — reducing costly errors, re-orders, and delays that arise from imprecise procurement briefs.</p>
           </div>
         </div>
-        <div class="procure-feature reveal reveal-delay-2">
+        <div class="procure-feature" data-cursor="hover">
           <div class="pf-icon">🔗</div>
           <div>
             <div class="pf-title">Supplier &amp; Logistics Liaison</div>
             <p class="pf-text">We coordinate directly with your approved suppliers and freight partners on delivery schedules, site readiness, and acceptance criteria — acting as the technical bridge between procurement and installation.</p>
           </div>
         </div>
-        <div class="procure-feature reveal reveal-delay-3">
+        <div class="procure-feature" data-cursor="hover">
           <div class="pf-icon">✅</div>
           <div>
             <div class="pf-title">Quality &amp; Acceptance Support</div>
@@ -1439,7 +1923,7 @@
           <h2 class="sec-heading">Where we<br>operate.</h2>
         </div>
         <div class="sector-list" style="margin-top:3rem;">
-          <div class="sector-item">
+          <div class="sector-item" data-cursor="hover">
             <div class="sector-icon">🇺🇳</div>
             <div>
               <div class="sector-name">United Nations System</div>
@@ -1447,7 +1931,7 @@
             </div>
             <div class="sector-arrow">→</div>
           </div>
-          <div class="sector-item">
+          <div class="sector-item" data-cursor="hover">
             <div class="sector-icon">🏛️</div>
             <div>
               <div class="sector-name">Government Ministries</div>
@@ -1455,7 +1939,7 @@
             </div>
             <div class="sector-arrow">→</div>
           </div>
-          <div class="sector-item">
+          <div class="sector-item" data-cursor="hover">
             <div class="sector-icon">🤝</div>
             <div>
               <div class="sector-name">International NGOs</div>
@@ -1463,7 +1947,7 @@
             </div>
             <div class="sector-arrow">→</div>
           </div>
-          <div class="sector-item">
+          <div class="sector-item" data-cursor="hover">
             <div class="sector-icon">🏥</div>
             <div>
               <div class="sector-name">Healthcare Infrastructure</div>
@@ -1471,7 +1955,7 @@
             </div>
             <div class="sector-arrow">→</div>
           </div>
-          <div class="sector-item">
+          <div class="sector-item" data-cursor="hover">
             <div class="sector-icon">⚡</div>
             <div>
               <div class="sector-name">Development Finance Programmes</div>
@@ -1482,30 +1966,33 @@
         </div>
       </div>
       <div class="reveal">
-        <div class="map-visual">
+        <div class="map-visual" id="mapVisual">
           <div class="map-overlay-grid"></div>
-          <!-- Simplified SVG world silhouette -->
           <svg viewBox="0 0 960 480" xmlns="http://www.w3.org/2000/svg" fill="none">
-            <!-- Very simplified continent shapes as decorative outlines -->
             <!-- North America -->
-            <path d="M 80 80 Q 120 60 180 80 L 220 120 Q 230 160 200 200 L 160 240 Q 120 260 100 230 L 80 190 Q 60 150 80 120 Z" stroke="rgba(0,200,212,0.25)" stroke-width="0.8" fill="rgba(0,200,212,0.04)"/>
+            <path class="continent-path" data-region="North America" d="M 80 80 Q 120 60 180 80 L 220 120 Q 230 160 200 200 L 160 240 Q 120 260 100 230 L 80 190 Q 60 150 80 120 Z" stroke="rgba(0,200,212,0.25)" stroke-width="0.8" fill="rgba(0,200,212,0.04)"/>
             <!-- South America -->
-            <path d="M 160 260 Q 200 250 220 280 L 230 340 Q 220 400 190 420 L 160 410 Q 140 380 150 340 L 140 300 Z" stroke="rgba(0,200,212,0.25)" stroke-width="0.8" fill="rgba(0,200,212,0.04)"/>
+            <path class="continent-path" data-region="South America" d="M 160 260 Q 200 250 220 280 L 230 340 Q 220 400 190 420 L 160 410 Q 140 380 150 340 L 140 300 Z" stroke="rgba(0,200,212,0.25)" stroke-width="0.8" fill="rgba(0,200,212,0.04)"/>
             <!-- Europe -->
-            <path d="M 420 60 Q 480 50 510 80 L 500 120 Q 470 140 440 130 L 420 110 Z" stroke="rgba(0,200,212,0.3)" stroke-width="0.8" fill="rgba(0,200,212,0.06)"/>
+            <path class="continent-path" data-region="Europe" d="M 420 60 Q 480 50 510 80 L 500 120 Q 470 140 440 130 L 420 110 Z" stroke="rgba(0,200,212,0.3)" stroke-width="0.8" fill="rgba(0,200,212,0.06)"/>
             <!-- Africa -->
-            <path d="M 440 140 Q 500 130 520 160 L 530 220 Q 540 300 510 360 L 480 380 Q 450 370 440 340 L 430 270 Q 420 200 440 160 Z" stroke="rgba(0,200,212,0.3)" stroke-width="0.8" fill="rgba(0,200,212,0.06)"/>
+            <path class="continent-path" data-region="Africa" d="M 440 140 Q 500 130 520 160 L 530 220 Q 540 300 510 360 L 480 380 Q 450 370 440 340 L 430 270 Q 420 200 440 160 Z" stroke="rgba(0,200,212,0.3)" stroke-width="0.8" fill="rgba(0,200,212,0.06)"/>
             <!-- Middle East / Asia -->
-            <path d="M 510 80 Q 600 60 700 80 L 780 100 Q 830 120 840 160 L 800 200 Q 740 220 680 200 L 600 180 Q 540 160 520 130 Z" stroke="rgba(0,200,212,0.2)" stroke-width="0.8" fill="rgba(0,200,212,0.04)"/>
+            <path class="continent-path" data-region="Middle East & Asia" d="M 510 80 Q 600 60 700 80 L 780 100 Q 830 120 840 160 L 800 200 Q 740 220 680 200 L 600 180 Q 540 160 520 130 Z" stroke="rgba(0,200,212,0.2)" stroke-width="0.8" fill="rgba(0,200,212,0.04)"/>
             <!-- SE Asia / India -->
-            <path d="M 660 180 Q 700 200 720 240 L 700 280 Q 670 290 650 270 L 640 230 Z" stroke="rgba(0,200,212,0.2)" stroke-width="0.8" fill="rgba(0,200,212,0.04)"/>
+            <path class="continent-path" data-region="South & Southeast Asia" d="M 660 180 Q 700 200 720 240 L 700 280 Q 670 290 650 270 L 640 230 Z" stroke="rgba(0,200,212,0.2)" stroke-width="0.8" fill="rgba(0,200,212,0.04)"/>
             <!-- Australia -->
-            <path d="M 760 280 Q 820 260 860 290 L 870 340 Q 850 380 810 380 L 770 360 Q 750 330 760 300 Z" stroke="rgba(0,200,212,0.2)" stroke-width="0.8" fill="rgba(0,200,212,0.04)"/>
-            <!-- Grid lines (lat/lon) -->
+            <path class="continent-path" data-region="Oceania" d="M 760 280 Q 820 260 860 290 L 870 340 Q 850 380 810 380 L 770 360 Q 750 330 760 300 Z" stroke="rgba(0,200,212,0.2)" stroke-width="0.8" fill="rgba(0,200,212,0.04)"/>
+            <!-- Grid lines -->
             <line x1="0" y1="240" x2="960" y2="240" stroke="rgba(0,200,212,0.08)" stroke-width="0.5"/>
             <line x1="480" y1="0" x2="480" y2="480" stroke="rgba(0,200,212,0.08)" stroke-width="0.5"/>
             <line x1="0" y1="120" x2="960" y2="120" stroke="rgba(0,200,212,0.04)" stroke-width="0.5" stroke-dasharray="4,8"/>
             <line x1="0" y1="360" x2="960" y2="360" stroke="rgba(0,200,212,0.04)" stroke-width="0.5" stroke-dasharray="4,8"/>
+            <!-- Flight paths -->
+            <path class="flight-path" d="M 460 100 Q 500 180 480 250" />
+            <path class="flight-path" d="M 480 250 Q 550 200 650 180" style="animation-delay: 0.5s"/>
+            <path class="flight-path" d="M 650 180 Q 700 220 800 300" style="animation-delay: 1s"/>
+            <path class="flight-path" d="M 200 150 Q 350 100 460 100" style="animation-delay: 1.5s"/>
           </svg>
           <!-- Operation pings -->
           <div class="ping" style="top:30%;left:47%;animation-delay:0s;"></div>
@@ -1516,6 +2003,7 @@
           <div class="ping sand" style="top:25%;left:43%;animation-delay:0.3s;"></div>
           <div class="ping" style="top:62%;left:80%;animation-delay:2s;"></div>
           <div class="ping sand" style="top:22%;left:18%;animation-delay:1.2s;"></div>
+          <div class="map-tooltip" id="mapTooltip"></div>
           <div class="map-label">◆ Active Operations &nbsp; ◆ Programme Regions</div>
         </div>
       </div>
@@ -1540,8 +2028,8 @@
           <p style="font-size:0.82rem;color:var(--slate);line-height:1.65;font-weight:300;">All programme details below reflect experience gained in prior roles. Client and organisational references are available on request at the appropriate stage of any engagement.</p>
         </div>
       </div>
-      <div class="trust-cards reveal">
-        <div class="trust-card">
+      <div class="trust-cards">
+        <div class="trust-card" data-cursor="hover">
           <div class="trust-card-org">Prior Role · UN Programme · Incinerator Installation</div>
           <h4>Large-Scale Medical Waste Incinerator Programme</h4>
           <p>Management and installation of high-capacity medical waste incinerators across a national hospital network. Scope covered technical assessment of existing waste management infrastructure, equipment specification alignment with WHO guidelines, coordination of in-country logistics, civil works preparation, mechanical installation, flue and stack works, commissioning to operational standard, and structured operator training for facility staff.</p>
@@ -1550,7 +2038,7 @@
           </div>
           <div class="trust-card-loc">📍 Sub-Saharan Africa</div>
         </div>
-        <div class="trust-card">
+        <div class="trust-card" data-cursor="hover">
           <div class="trust-card-org">Prior Role · UN Programme · Incinerator Installation</div>
           <h4>Regional Incinerator Rollout — Field &amp; Clinic Sites</h4>
           <p>Installation of smaller-scale incinerators across dispersed rural health clinics and field stations with limited access routes and no on-site utilities. Works included ground preparation, concrete plinths, mechanical install, improvised flue routing within constrained building envelopes, and handover training delivered in local languages. Programmes managed concurrently across multiple countries.</p>
@@ -1559,7 +2047,7 @@
           </div>
           <div class="trust-card-loc">📍 East &amp; Central Africa</div>
         </div>
-        <div class="trust-card">
+        <div class="trust-card" data-cursor="hover">
           <div class="trust-card-org">Prior Role · UN Programme · Shelter &amp; Civil Works</div>
           <h4>Purpose-Built Incinerator Housing &amp; Shelter Structures</h4>
           <p>Design and construction of dedicated shelter buildings to house incinerator units at health facilities — including structural blockwork enclosures, corrugated roofing, ventilation apertures, security doors, and ash pit construction. Structures built to withstand local climate conditions with minimal maintenance requirements. Works delivered as part of integrated incinerator installation contracts.</p>
@@ -1568,7 +2056,7 @@
           </div>
           <div class="trust-card-loc">📍 West Africa · East Africa</div>
         </div>
-        <div class="trust-card">
+        <div class="trust-card" data-cursor="hover">
           <div class="trust-card-org">Prior Role · UN Programme · Electrical Works</div>
           <h4>Electrical Supply &amp; Distribution — Health Facility Network</h4>
           <p>Full LV electrical installation across multiple health facilities — covering main distribution boards, sub-distribution, circuit installation, generator connection and automatic transfer switching, earthing systems, and final circuit testing and certification. Works completed on facilities ranging from single-room clinics to multi-ward district hospitals, with varying infrastructure starting conditions.</p>
@@ -1577,7 +2065,7 @@
           </div>
           <div class="trust-card-loc">📍 Southern Africa</div>
         </div>
-        <div class="trust-card">
+        <div class="trust-card" data-cursor="hover">
           <div class="trust-card-org">Prior Role · UN Programme · Electrical Works</div>
           <h4>Solar Hybrid Power — Off-Grid Health &amp; WASH Sites</h4>
           <p>Design and installation of solar photovoltaic systems with battery storage and diesel generator backup for off-grid health and water treatment sites. Works included structural mounting, PV array installation, charge controller and inverter commissioning, battery bank configuration, and integration with existing or new generator sets. Systems sized to meet facility-specific medical equipment loads.</p>
@@ -1586,7 +2074,7 @@
           </div>
           <div class="trust-card-loc">📍 East Africa · South Asia</div>
         </div>
-        <div class="trust-card">
+        <div class="trust-card" data-cursor="hover">
           <div class="trust-card-org">Prior Role · Multi-Discipline · Integrated Programme</div>
           <h4>Integrated Health Infrastructure — Incinerators, Electrical &amp; Shelter</h4>
           <p>End-to-end delivery of a combined programme spanning incinerator procurement coordination, shelter construction for waste management areas, full electrical installation including solar backup, and WASH infrastructure across a network of district health facilities. Coordinated across multiple contractors and government counterparts within a UN-administered programme framework.</p>
@@ -1595,7 +2083,7 @@
           </div>
           <div class="trust-card-loc">📍 Francophone West Africa</div>
         </div>
-        <div class="trust-card" style="grid-column:1/-1;background:rgba(200,185,138,0.05);border-top:1px solid rgba(200,185,138,0.15);">
+        <div class="trust-card" style="grid-column:1/-1;background:rgba(200,185,138,0.05);border-top:1px solid rgba(200,185,138,0.15);" data-cursor="hover">
           <div class="trust-card-org" style="color:var(--sand);">Client &amp; Reference Information</div>
           <h4 style="color:var(--mist);font-size:1rem;">Client details withheld pending authorisation</h4>
           <p>Organisational and client references are available on request at the appropriate stage of engagement. We are committed to full transparency regarding the basis and context of our team's experience.</p>
@@ -1609,9 +2097,9 @@
 <div class="quote-section">
   <div class="container">
     <div class="quote-inner">
-      <div class="quote-mark reveal">"</div>
-      <p class="quote-text reveal">"The most critical infrastructure in the world doesn't get built in comfortable conditions. It gets built by people who know what they're doing, in places where failure isn't an option."</p>
-      <div class="quote-attr reveal">MeridianGlobal · Field Operations Principle</div>
+      <div class="quote-mark">"</div>
+      <p class="quote-text">"The most critical infrastructure in the world doesn't get built in comfortable conditions. It gets built by people who know what they're doing, in places where failure isn't an option."</p>
+      <div class="quote-attr">MeridianGlobal · Field Operations Principle</div>
     </div>
   </div>
 </div>
@@ -1625,38 +2113,38 @@
         <h2 class="sec-heading">The relationship<br>doesn't end at<br><em>commissioning.</em></h2>
         <p class="sec-sub" style="margin-top:1.5rem;">Installed assets in remote or challenging environments need sustained support. Our UK-based aftercare desk provides technical guidance, spare parts logistics, and planned maintenance services long after handover.</p>
         <br><br>
-        <a href="#contact" class="btn-primary" style="background:var(--navy);color:white;">
+        <a href="#contact" class="btn-primary" style="background:var(--navy);color:white;" data-cursor="hover">
           <span>Enquire About Aftercare</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
       </div>
-      <div class="aftercare-features reveal">
-        <div class="af-card">
+      <div class="aftercare-features">
+        <div class="af-card" data-cursor="hover">
           <span class="af-icon">📞</span>
           <div class="af-title">24/7 UK Support Desk</div>
           <p class="af-text">British-based technical team available around the clock. First response within 2 hours for critical system faults, regardless of time zone.</p>
         </div>
-        <div class="af-card">
+        <div class="af-card" data-cursor="hover">
           <span class="af-icon">🛠️</span>
           <div class="af-title">Planned Maintenance</div>
           <p class="af-text">Annual and periodic service programmes designed for remote environments. Pre-positioned spares, scheduled visits, and compliance reporting.</p>
         </div>
-        <div class="af-card">
+        <div class="af-card" data-cursor="hover">
           <span class="af-icon">🚀</span>
           <div class="af-title">Emergency Deployment</div>
           <p class="af-text">Rapid-response engineering teams available for unplanned failures. Typically on-site within 72 hours of confirmed mobilisation.</p>
         </div>
-        <div class="af-card">
+        <div class="af-card" data-cursor="hover">
           <span class="af-icon">📋</span>
           <div class="af-title">Asset Documentation</div>
           <p class="af-text">Full as-built documentation, O&amp;M manuals, and digital asset registers handed over at completion. Maintained and updated through the support lifecycle.</p>
         </div>
-        <div class="af-card">
+        <div class="af-card" data-cursor="hover">
           <span class="af-icon">🎓</span>
           <div class="af-title">Training &amp; Upskilling</div>
           <p class="af-text">In-country operator and maintenance training delivered in local languages. Remote refresher training available via our online platform.</p>
         </div>
-        <div class="af-card">
+        <div class="af-card" data-cursor="hover">
           <span class="af-icon">🔩</span>
           <div class="af-title">Spare Parts Supply</div>
           <p class="af-text">Pre-negotiated spares contracts with manufacturers. UK-held strategic stock for critical equipment with international courier dispatch.</p>
@@ -1677,28 +2165,28 @@
           <p class="sec-sub light" style="margin-top:1.2rem;">Whether you have a contract ready to tender or an early-stage requirement to develop, our team will provide a confidential consultation within 24 hours.</p>
         </div>
         <div class="contact-details">
-          <div class="cd-item reveal">
+          <div class="cd-item" data-cursor="hover">
             <div class="cd-icon">📍</div>
             <div>
               <div class="cd-label">Headquarters</div>
               <div class="cd-val">United Kingdom · Serving globally</div>
             </div>
           </div>
-          <div class="cd-item reveal">
+          <div class="cd-item" data-cursor="hover">
             <div class="cd-icon">📞</div>
             <div>
               <div class="cd-label">Direct Line</div>
               <div class="cd-val">+44 (0) 7842 800801</div>
             </div>
           </div>
-          <div class="cd-item reveal">
+          <div class="cd-item" data-cursor="hover">
             <div class="cd-icon">⚡</div>
             <div>
               <div class="cd-label">Emergency Response</div>
               <div class="cd-val">24/7 availability for urgent project recovery</div>
             </div>
           </div>
-          <div class="cd-item reveal">
+          <div class="cd-item" data-cursor="hover">
             <div class="cd-icon">🏛️</div>
             <div>
               <div class="cd-label">Procurement Coordination</div>
@@ -1713,14 +2201,17 @@
             <div class="form-group">
               <label>Full Name</label>
               <input type="text" required placeholder="Dr. Sarah Ahmed">
+              <span class="valid-indicator">✓</span>
             </div>
             <div class="form-group">
               <label>Organisation</label>
               <input type="text" required placeholder="UNDP / Ministry of Health">
+              <span class="valid-indicator">✓</span>
             </div>
             <div class="form-group">
               <label>Email Address</label>
               <input type="email" required placeholder="s.ahmed@undp.org">
+              <span class="valid-indicator">✓</span>
             </div>
             <div class="form-group">
               <label>Phone</label>
@@ -1747,10 +2238,11 @@
             </div>
             <div class="form-group full">
               <label>Project Overview</label>
-              <textarea placeholder="Describe the project requirement, approximate scale, timeline, and any framework or donor constraints..."></textarea>
+              <textarea required placeholder="Describe the project requirement, approximate scale, timeline, and any framework or donor constraints..."></textarea>
+              <span class="valid-indicator">✓</span>
             </div>
             <div class="form-submit-row">
-              <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">
+              <button type="submit" class="btn-primary" style="width:100%;justify-content:center;" data-cursor="hover">
                 <span>Submit Project Enquiry</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
@@ -1771,79 +2263,501 @@
         <div class="footer-copy" style="margin-top:0.4rem;">© 2025 MeridianGlobal Ltd. Registered in England &amp; Wales.</div>
       </div>
       <div class="footer-right">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Modern Slavery Statement</a>
-        <a href="#">ISO Certifications</a>
-        <a href="#contact">Contact</a>
+        <a href="#" data-cursor="hover">Privacy Policy</a>
+        <a href="#" data-cursor="hover">Modern Slavery Statement</a>
+        <a href="#" data-cursor="hover">ISO Certifications</a>
+        <a href="#contact" data-cursor="hover">Contact</a>
       </div>
     </div>
   </div>
 </footer>
 
 <script>
-  /* ── CURSOR ── */
+  // ── GSAP SETUP ──
+  gsap.registerPlugin(ScrollTrigger);
+
+  // ── CURSOR SYSTEM ──
   const cross = document.getElementById('cursorCross');
-  const ring  = document.getElementById('cursorRing');
-  let mx=0,my=0,rx=0,ry=0;
-  document.addEventListener('mousemove', e => {
-    mx = e.clientX; my = e.clientY;
-    cross.style.transform = `translate(${mx-10}px,${my-10}px)`;
-  });
-  (function animRing(){
-    rx += (mx-rx)*0.1; ry += (my-ry)*0.1;
-    ring.style.transform = `translate(${rx-22}px,${ry-22}px)`;
-    requestAnimationFrame(animRing);
-  })();
-  document.querySelectorAll('a,button,.cap-card,.af-card,.trust-card,.sector-item').forEach(el => {
-    el.addEventListener('mouseenter', () => { ring.style.width='64px';ring.style.height='64px';ring.style.opacity='0.25'; });
-    el.addEventListener('mouseleave', () => { ring.style.width='44px';ring.style.height='44px';ring.style.opacity='1'; });
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  let isHovering = false;
+  let isClicking = false;
+
+  // Check for touch device
+  const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+
+  if (!isTouchDevice) {
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cross.style.transform = `translate(${mx - 10}px, ${my - 10}px)`;
+    });
+
+    (function animRing() {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.transform = `translate(${rx - 22}px, ${ry - 22}px)`;
+      requestAnimationFrame(animRing);
+    })();
+
+    // Cursor states
+    document.querySelectorAll('[data-cursor="hover"]').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        ring.classList.add('hovering');
+      });
+      el.addEventListener('mouseleave', () => {
+        ring.classList.remove('hovering');
+      });
+      el.addEventListener('mousedown', () => {
+        ring.classList.add('clicking');
+      });
+      el.addEventListener('mouseup', () => {
+        ring.classList.remove('clicking');
+      });
+    });
+
+    document.addEventListener('mousedown', () => {
+      cross.style.transform = `translate(${mx - 10}px, ${my - 10}px) scale(0.8)`;
+    });
+    document.addEventListener('mouseup', () => {
+      cross.style.transform = `translate(${mx - 10}px, ${my - 10}px) scale(1)`;
+    });
+  } else {
+    cross.style.display = 'none';
+    ring.style.display = 'none';
+    document.body.style.cursor = 'auto';
+  }
+
+  // ── PARTICLE CANVAS ──
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let animationId;
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  class Particle {
+    constructor() {
+      this.reset();
+    }
+    reset() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2 + 0.5;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.speedY = (Math.random() - 0.5) * 0.3;
+      this.opacity = Math.random() * 0.5 + 0.1;
+      this.life = Math.random() * 100 + 100;
+      this.maxLife = this.life;
+    }
+    update() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      this.life--;
+      if (this.life <= 0 || this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+        this.reset();
+      }
+    }
+    draw() {
+      const lifeRatio = this.life / this.maxLife;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 200, 212, ${this.opacity * lifeRatio})`;
+      ctx.fill();
+    }
+  }
+
+  // Create particles
+  for (let i = 0; i < 60; i++) {
+    particles.push(new Particle());
+  }
+
+  // Connect particles with lines
+  function drawConnections() {
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(0, 200, 212, ${0.08 * (1 - dist / 120)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.update();
+      p.draw();
+    });
+    drawConnections();
+    animationId = requestAnimationFrame(animateParticles);
+  }
+  animateParticles();
+
+  // Pause particles when not visible
+  const heroObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        if (!animationId) animateParticles();
+      } else {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+    });
+  }, { threshold: 0.1 });
+  heroObserver.observe(document.querySelector('.hero'));
+
+  // ── HERO ANIMATIONS ──
+  window.addEventListener('load', () => {
+    // Coordinate labels
+    gsap.to('.coord-label', {
+      opacity: 1,
+      duration: 1,
+      stagger: 0.2,
+      delay: 0.5,
+      ease: 'power2.out'
+    });
+
+    // Eyebrow
+    setTimeout(() => {
+      document.querySelector('.eyebrow-line').classList.add('active');
+    }, 800);
+    gsap.to('.hero-eyebrow', {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      delay: 0.6,
+      ease: 'power3.out'
+    });
+
+    // Headline lines
+    document.querySelectorAll('.line-inner').forEach((line, i) => {
+      setTimeout(() => {
+        line.classList.add('visible');
+      }, 1000 + i * 200);
+    });
+
+    // Em underline
+    setTimeout(() => {
+      document.querySelector('.hero h1 em').classList.add('active');
+    }, 2000);
+
+    // Description
+    setTimeout(() => {
+      document.querySelector('.hero-desc').classList.add('visible');
+    }, 1600);
+
+    // Actions
+    setTimeout(() => {
+      document.querySelector('.hero-actions').classList.add('visible');
+    }, 1900);
+
+    // Credentials
+    document.querySelectorAll('.cred-badge').forEach((badge, i) => {
+      setTimeout(() => {
+        badge.classList.add('visible');
+      }, 2200 + i * 150);
+    });
+
+    // Stats
+    document.querySelectorAll('.h-stat').forEach((stat, i) => {
+      setTimeout(() => {
+        stat.classList.add('visible');
+      }, 2400 + i * 100);
+    });
+
+    // Counter animation
+    const counters = [
+      { el: document.querySelectorAll('.h-stat-num')[0], end: 60, suffix: '+' },
+      { el: document.querySelectorAll('.h-stat-num')[1], end: 200, suffix: '+' },
+      { el: document.querySelectorAll('.h-stat-num')[2], end: 15, suffix: '+' }
+    ];
+
+    counters.forEach((counter, i) => {
+      const obj = { val: 0 };
+      gsap.to(obj, {
+        val: counter.end,
+        duration: 2,
+        delay: 2.5 + i * 0.2,
+        ease: 'power2.out',
+        onUpdate: () => {
+          counter.el.innerHTML = Math.round(obj.val) + `<span style="font-size:1.6rem">${counter.suffix}</span>`;
+        }
+      });
+    });
   });
 
-  /* ── MOBILE NAV ── */
+  // ── SCROLL PROGRESS ──
+  const scrollProgress = document.getElementById('scrollProgress');
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = (scrollTop / docHeight) * 100;
+    scrollProgress.style.width = progress + '%';
+  });
+
+  // ── NAV SCROLL BEHAVIOR ──
+  const header = document.getElementById('mainHeader');
+  let lastScrollY = 0;
+  let ticking = false;
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+        
+        // Compact nav on scroll
+        if (currentScrollY > 50) {
+          header.classList.add('compact');
+        } else {
+          header.classList.remove('compact');
+        }
+
+        // Hide/show nav
+        if (currentScrollY > lastScrollY && currentScrollY > 200) {
+          header.classList.add('scrolled-down');
+          header.classList.remove('scrolled-up');
+        } else {
+          header.classList.remove('scrolled-down');
+          header.classList.add('scrolled-up');
+        }
+        
+        lastScrollY = currentScrollY;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+
+  // ── MOBILE NAV ──
   document.getElementById('menuToggle').addEventListener('click', () => {
     document.getElementById('navLinks').classList.toggle('active');
   });
 
-  /* ── SMOOTH SCROLL ── */
+  // ── SMOOTH SCROLL ──
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
       const t = document.querySelector(a.getAttribute('href'));
-      if(t){ e.preventDefault(); t.scrollIntoView({behavior:'smooth'}); }
+      if (t) {
+        e.preventDefault();
+        t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('navLinks').classList.remove('active');
+      }
     });
   });
 
-  /* ── SCROLL REVEAL ── */
-  const obs = new IntersectionObserver(entries => {
-    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.reveal,.sector-item').forEach(el => obs.observe(el));
+  // ── SCROLL REVEAL WITH GSAP ──
+  // Section labels
+  gsap.utils.toArray('.sec-label-line').forEach(line => {
+    ScrollTrigger.create({
+      trigger: line,
+      start: 'top 85%',
+      onEnter: () => line.classList.add('active'),
+      once: true
+    });
+  });
 
-  /* ── FORM ── */
+  // Standard reveal elements
+  gsap.utils.toArray('.reveal').forEach(elem => {
+    gsap.fromTo(elem, 
+      { opacity: 0, y: 40 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: elem,
+          start: 'top 85%',
+          toggleActions: 'play none none none'
+        }
+      }
+    );
+  });
+
+  // Staggered reveals for groups
+  gsap.utils.toArray('.intro-pillar').forEach((pillar, i) => {
+    ScrollTrigger.create({
+      trigger: pillar,
+      start: 'top 85%',
+      onEnter: () => {
+        setTimeout(() => pillar.classList.add('visible'), i * 150);
+      },
+      once: true
+    });
+  });
+
+  gsap.utils.toArray('.cap-card').forEach((card, i) => {
+    ScrollTrigger.create({
+      trigger: card,
+      start: 'top 85%',
+      onEnter: () => {
+        setTimeout(() => card.classList.add('visible'), i * 100);
+      },
+      once: true
+    });
+  });
+
+  gsap.utils.toArray('.procure-feature').forEach((feat, i) => {
+    ScrollTrigger.create({
+      trigger: feat,
+      start: 'top 85%',
+      onEnter: () => {
+        setTimeout(() => feat.classList.add('visible'), i * 150);
+      },
+      once: true
+    });
+  });
+
+  gsap.utils.toArray('.sector-item').forEach((item, i) => {
+    ScrollTrigger.create({
+      trigger: item,
+      start: 'top 85%',
+      onEnter: () => {
+        setTimeout(() => item.classList.add('visible'), i * 100);
+      },
+      once: true
+    });
+  });
+
+  gsap.utils.toArray('.trust-card').forEach((card, i) => {
+    ScrollTrigger.create({
+      trigger: card,
+      start: 'top 85%',
+      onEnter: () => {
+        setTimeout(() => card.classList.add('visible'), i * 100);
+      },
+      once: true
+    });
+  });
+
+  gsap.utils.toArray('.af-card').forEach((card, i) => {
+    ScrollTrigger.create({
+      trigger: card,
+      start: 'top 85%',
+      onEnter: () => {
+        setTimeout(() => card.classList.add('visible'), i * 100);
+      },
+      once: true
+    });
+  });
+
+  gsap.utils.toArray('.cd-item').forEach((item, i) => {
+    ScrollTrigger.create({
+      trigger: item,
+      start: 'top 85%',
+      onEnter: () => {
+        setTimeout(() => item.classList.add('visible'), i * 100);
+      },
+      once: true
+    });
+  });
+
+  // Quote section
+  ScrollTrigger.create({
+    trigger: '.quote-section',
+    start: 'top 70%',
+    onEnter: () => {
+      document.querySelector('.quote-mark').classList.add('visible');
+      document.querySelector('.quote-text').classList.add('visible');
+      document.querySelector('.quote-attr').classList.add('visible');
+    },
+    once: true
+  });
+
+  // ── MAP INTERACTIVITY ──
+  const mapTooltip = document.getElementById('mapTooltip');
+  const mapVisual = document.getElementById('mapVisual');
+
+  document.querySelectorAll('.continent-path').forEach(path => {
+    path.addEventListener('mouseenter', (e) => {
+      const region = e.target.getAttribute('data-region');
+      mapTooltip.textContent = region;
+      mapTooltip.classList.add('visible');
+    });
+    path.addEventListener('mousemove', (e) => {
+      const rect = mapVisual.getBoundingClientRect();
+      mapTooltip.style.left = (e.clientX - rect.left + 15) + 'px';
+      mapTooltip.style.top = (e.clientY - rect.top - 30) + 'px';
+    });
+    path.addEventListener('mouseleave', () => {
+      mapTooltip.classList.remove('visible');
+    });
+  });
+
+  // ── FORM ──
   document.getElementById('contactForm').addEventListener('submit', e => {
     e.preventDefault();
     const btn = e.target.querySelector('.btn-primary');
+    const originalText = btn.querySelector('span').textContent;
     btn.querySelector('span').textContent = 'Enquiry Received — We\'ll respond within 24hrs ✓';
-    btn.style.background = 'var(--teal,#2eb8a0)';
+    btn.style.background = '#2eb8a0';
+    btn.style.pointerEvents = 'none';
+    
+    gsap.to(btn, {
+      scale: 1.02,
+      duration: 0.2,
+      yoyo: true,
+      repeat: 1
+    });
+    
     setTimeout(() => {
-      btn.querySelector('span').textContent = 'Submit Project Enquiry';
+      btn.querySelector('span').textContent = originalText;
       btn.style.background = '';
+      btn.style.pointerEvents = '';
+      e.target.reset();
     }, 4000);
   });
 
-  /* ── COUNTER ANIMATION ── */
-  const statEls = document.querySelectorAll('.h-stat-num');
-  const statData = [{end:60,suf:'+'},{end:200,suf:'+'},{end:15,suf:'+'},{end:null}];
-  statData.forEach((d,i) => {
-    if(!d.end) return;
-    let cur = 0;
-    const step = () => {
-      cur += Math.ceil(d.end / 45);
-      if(cur >= d.end){ statEls[i].innerHTML = d.end + '<span style="font-size:1.6rem">'+d.suf+'</span>'; return; }
-      statEls[i].innerHTML = cur + '<span style="font-size:1.6rem">'+d.suf+'</span>';
-      setTimeout(step, 30);
-    };
-    setTimeout(step, 1200 + i*120);
+  // ── PARALLAX EFFECTS ──
+  gsap.to('.hero-glow', {
+    yPercent: 30,
+    ease: 'none',
+    scrollTrigger: {
+      trigger: '.hero',
+      start: 'top top',
+      end: 'bottom top',
+      scrub: true
+    }
   });
+
+  gsap.to('.hero-glow-2', {
+    yPercent: -20,
+    ease: 'none',
+    scrollTrigger: {
+      trigger: '.hero',
+      start: 'top top',
+      end: 'bottom top',
+      scrub: true
+    }
+  });
+
+  // ── MAGNETIC EFFECT ON BUTTONS ──
+  if (!isTouchDevice) {
+    document.querySelectorAll('.btn-primary, .btn-outline').forEach(btn => {
+      btn.addEventListener('mousemove', (e) => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        btn.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px)`;
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = '';
+      });
+    });
+  }
 </script>
 </body>
 </html>
